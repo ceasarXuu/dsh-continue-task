@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createRoute, BASE } from '../host/routes.js'
+import { DEFAULT_SETTINGS } from '../host/settings.js'
 import { createStore } from '../host/store.js'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -90,6 +91,28 @@ test('POST scan and cancel reach the runtime', async () => {
     const cancel = await call(fx.route, request('POST', 'cancel', { sessionId: 's1' }))
     assert.equal(cancel.code, 200)
     assert.deepEqual(fx.calls.at(-1), ['cancel', 's1'])
+  } finally { await fx.close() }
+})
+
+test('POST reset restores one section and preserves fallback routes', async () => {
+  const fx = await harness()
+  try {
+    fx.store.setSettings({
+      startup: { graceSeconds: 9 },
+      transient: { maxAttempts: 3 },
+      failover: { maxSwitches: 1, fallbacks: [{ provider: 'backup', model: 'safe' }] },
+    })
+    const reset = await call(fx.route, request('POST', 'reset', { scope: 'startup' }))
+    assert.equal(reset.code, 200)
+    assert.equal(fx.store.settings.startup.graceSeconds, DEFAULT_SETTINGS.startup.graceSeconds)
+    assert.equal(fx.store.settings.transient.maxAttempts, 3)
+    assert.deepEqual(fx.store.settings.failover.fallbacks, [{ provider: 'backup', model: 'safe' }])
+    const all = await call(fx.route, request('POST', 'reset', { scope: 'all' }))
+    assert.equal(all.code, 200)
+    assert.equal(fx.store.settings.startup.graceSeconds, DEFAULT_SETTINGS.startup.graceSeconds)
+    assert.deepEqual(fx.store.settings.failover.fallbacks, [{ provider: 'backup', model: 'safe' }])
+    const bad = await call(fx.route, request('POST', 'reset', { scope: 'nope' }))
+    assert.equal(bad.code, 400)
   } finally { await fx.close() }
 })
 

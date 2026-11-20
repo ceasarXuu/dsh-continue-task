@@ -3,7 +3,7 @@
  * Same-origin browser traffic only, JSON request bodies, no-store responses.
  * @module dsh-continue-task/routes
  */
-import { SettingsError } from './settings.js'
+import { DEFAULT_SETTINGS, SettingsError } from './settings.js'
 
 export const BASE = '/plugin/continue-task'
 const MAX_BODY = 128 * 1024
@@ -84,6 +84,22 @@ function modelGroups(catalog) {
 }
 
 /**
+ * Resolve one reset scope over the current settings, preserving the user's
+ * fallback routes because they are content, not policy defaults.
+ * @param scope - all, startup, transient, or failover.
+ * @param current - current resolved settings.
+ * @returns a complete settings candidate.
+ */
+function resetSettings(scope, current) {
+  const fallbacks = current.failover.fallbacks
+  if (scope === 'startup') return { ...current, startup: { ...DEFAULT_SETTINGS.startup } }
+  if (scope === 'transient') return { ...current, transient: { ...DEFAULT_SETTINGS.transient } }
+  if (scope === 'failover') return { ...current, failover: { ...DEFAULT_SETTINGS.failover, fallbacks } }
+  if (scope === 'all') return { ...DEFAULT_SETTINGS, failover: { ...DEFAULT_SETTINGS.failover, fallbacks } }
+  throw new SettingsError('未知的恢复范围。')
+}
+
+/**
  * Build the prefix route handler.
  * @param ctx - Host context carrying connection and sessionController.
  * @param runtime - recovery runtime.
@@ -127,6 +143,18 @@ export function createRoute(ctx, runtime, store, logger) {
       if (path === 'scan') {
         const result = await runtime.scan({ manual: true })
         return reply(res, 200, { result, status: runtime.status() })
+      }
+      if (path === 'reset') {
+        let next
+        try {
+          next = resetSettings(typeof body.scope === 'string' ? body.scope : '', store.settings)
+        } catch (error) {
+          if (error instanceof SettingsError) return reply(res, 400, { error: error.message })
+          throw error
+        }
+        store.setSettings(next)
+        await store.flush()
+        return reply(res, 200, runtime.status())
       }
       if (path === 'cancel') {
         if (typeof body.sessionId !== 'string' || body.sessionId.length === 0) {

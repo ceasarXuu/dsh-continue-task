@@ -13,7 +13,7 @@ window.__ModuleLoader__.load({
     const BASE = '/plugin/continue-task'
     const zh = {
       nav: '任务续传', title: '任务续传', subtitle: '应用重启、网络中断或额度不足后，自动把未完成的任务继续下去。所有恢复都通过普通会话消息完成，记录可在对话中查看。',
-      enabled: '启用任务续传', enabledHint: '关闭后不再检测或恢复任何会话。',
+      enabled: '启用任务续传', enabledHint: '关闭后不再检测或恢复任何会话。', resetDefaults: '恢复默认设置', resetAllDefaults: '恢复全部默认设置',
       recoveryMessage: '通用恢复提示语', recoveryMessageHint: '网络、额度等非重启类恢复会在对话中追加这条消息。',
       startup: '应用启动后继续', startupHint: '应用上次退出时仍在执行的任务，会在下次启动后自动继续。只扫描最近使用过的会话。',
       startupEnabled: '启动时自动继续', grace: '启动等待', lookback: '只回看最近', maxSessions: '每次最多恢复', prompt: '续传提示语', promptHint: '这条消息会进入对话，告诉模型上一轮被中断并从中断处继续。', minutes: '分钟', seconds: '秒', sessions: '个会话',
@@ -29,7 +29,7 @@ window.__ModuleLoader__.load({
     }
     const en = {
       nav: 'Task recovery', title: 'Task recovery', subtitle: 'Keeps unfinished work going after an app restart, a network failure, or an exhausted quota. Every recovery is an ordinary session message, visible in the conversation.',
-      enabled: 'Enable task recovery', enabledHint: 'When off, no session is inspected or resumed.',
+      enabled: 'Enable task recovery', enabledHint: 'When off, no session is inspected or resumed.', resetDefaults: 'Restore defaults', resetAllDefaults: 'Restore all defaults',
       recoveryMessage: 'General recovery message', recoveryMessageHint: 'Network and quota recoveries append this message to the conversation.',
       startup: 'Continue after app start', startupHint: 'Tasks that were still running when the app last exited continue after the next start. Only recently used sessions are scanned.',
       startupEnabled: 'Continue on startup', grace: 'Startup wait', lookback: 'Look back', maxSessions: 'At most', prompt: 'Continuation message', promptHint: 'This message enters the conversation and tells the model that the previous turn was interrupted.', minutes: 'minutes', seconds: 'seconds', sessions: 'sessions',
@@ -62,7 +62,7 @@ window.__ModuleLoader__.load({
       .ct-page { display: grid; gap: 14px; max-width: 780px; color: var(--dsw-alias-label-primary); }
       .ct-head h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; } .ct-sub { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 13px; line-height: 1.6; }
       .ct-section { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-layer-1); } .ct-section h3 { margin: 0; font-size: 14px; font-weight: 600; } .ct-hint { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 1.6; }
-      .ct-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; } .ct-row-text { min-width: 0; display: grid; gap: 3px; } .ct-label { font-size: 13px; }
+      .ct-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; } .ct-row-text { min-width: 0; display: grid; gap: 3px; } .ct-row-actions { display: flex; align-items: center; gap: 10px; flex: none; } .ct-label { font-size: 13px; }
       .ct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; } .ct-field { display: grid; gap: 4px; min-width: 0; } .ct-field > span { color: var(--dsw-alias-label-secondary); font-size: 12px; }
       .ct-page input, .ct-page select, .ct-page textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font: inherit; font-size: 13px; }
       .ct-page input:focus, .ct-page select:focus, .ct-page textarea:focus { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: -1px; } .ct-page textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
@@ -90,43 +90,28 @@ window.__ModuleLoader__.load({
         return () => tag.remove()
       }, [])
     }
-
     function timeText(value, locale) {
       if (!value) return ''
       return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value))
     }
 
-    const SETTING_RANGES = [
-      [0, 120], [1, 10080], [1, 10], [1, 20], [5, 3600], [5, 86400], [1, 1440], [0, 3],
-    ]
-
+    const SETTING_RANGES = [[0, 120], [1, 10080], [1, 10], [1, 20], [5, 3600], [5, 86400], [1, 1440], [0, 3]]
     function invalidSettings(settings) {
-      const values = [
-        settings.startup.graceSeconds, settings.startup.lookbackMinutes, settings.startup.maxSessions,
+      const values = [settings.startup.graceSeconds, settings.startup.lookbackMinutes, settings.startup.maxSessions,
         settings.transient.maxAttempts, settings.transient.baseDelaySeconds, settings.transient.maxDelaySeconds,
-        settings.transient.maxWaitMinutes, settings.failover.maxSwitches,
-      ]
-      if (values.some((value, index) => !Number.isInteger(value)
-        || value < SETTING_RANGES[index][0] || value > SETTING_RANGES[index][1])) return true
-      return !settings.recoveryPrompt.trim() || !settings.startup.continuePrompt.trim()
+        settings.transient.maxWaitMinutes, settings.failover.maxSwitches]
+      return values.some((value, index) => !Number.isInteger(value)
+        || value < SETTING_RANGES[index][0] || value > SETTING_RANGES[index][1])
+        || !settings.recoveryPrompt.trim() || !settings.startup.continuePrompt.trim()
     }
-
     function settingsPayload(settings) {
-      return {
-        ...settings,
-        recoveryPrompt: settings.recoveryPrompt.trim(),
+      const fallbacks = settings.failover.fallbacks
+        .filter(route => route.provider?.trim() && route.model?.trim())
+        .map(route => ({ provider: route.provider.trim(), model: route.model.trim(),
+          ...route.reasoningEffort ? { reasoningEffort: route.reasoningEffort } : {} }))
+      return { ...settings, recoveryPrompt: settings.recoveryPrompt.trim(),
         startup: { ...settings.startup, continuePrompt: settings.startup.continuePrompt.trim() },
-        failover: {
-          ...settings.failover,
-          fallbacks: settings.failover.fallbacks
-            .filter(route => route.provider?.trim() && route.model?.trim())
-            .map(route => ({
-              provider: route.provider.trim(),
-              model: route.model.trim(),
-              ...route.reasoningEffort ? { reasoningEffort: route.reasoningEffort } : {},
-            })),
-        },
-      }
+        failover: { ...settings.failover, fallbacks } }
     }
     function Section({ title, hint, children }) {
       return h('section', { className: 'ct-section' },
@@ -134,17 +119,19 @@ window.__ModuleLoader__.load({
         hint ? h('p', { className: 'ct-hint' }, hint) : null,
         children)
     }
-    function Switch({ label, hint, checked, onChange }) {
+    function Switch({ label, hint, checked, onChange, reset, resetLabel }) {
       const toggle = () => onChange(!checked)
       return h('div', { className: 'ct-row' },
         h('div', { className: 'ct-row-text', onClick: toggle, style: { cursor: 'pointer' } },
           h('span', { className: 'ct-label' }, label),
           hint ? h('span', { className: 'ct-hint' }, hint) : null),
-        h('button', {
-          type: 'button', role: 'switch', 'aria-checked': checked ? 'true' : 'false',
-          'aria-label': label, className: 'ct-switch' + (checked ? ' ct-on' : ''),
-          onClick: toggle,
-        }, h('span', { className: 'ct-knob' })))
+        h('div', { className: 'ct-row-actions' },
+          reset ? h('button', { type: 'button', className: 'ct-link', onClick: reset }, resetLabel) : null,
+          h('button', {
+            type: 'button', role: 'switch', 'aria-checked': checked ? 'true' : 'false',
+            'aria-label': label, className: 'ct-switch' + (checked ? ' ct-on' : ''),
+            onClick: toggle,
+          }, h('span', { className: 'ct-knob' }))))
     }
     function NumberField({ label, value, unit, min, max, disabled, onChange }) {
       return h('label', { className: 'ct-field' },
@@ -241,7 +228,6 @@ window.__ModuleLoader__.load({
     function kindLabel(t, kind) {
       return dynamicLabel(t, 'kind' + kind.charAt(0).toUpperCase() + kind.slice(1), t('kindEvent'))
     }
-
     function makePage(ctx, t) {
       return function Page() {
         const revision = useLocale(ctx)
@@ -349,6 +335,19 @@ window.__ModuleLoader__.load({
           queueSave(next)
         }
 
+        async function resetSettings(scope) {
+          clearTimeout(saveTimer.current); saveTimer.current = undefined
+          const mine = ++saveSeq.current
+          setError(''); setNotice('')
+          try {
+            const status = await api('reset', { scope })
+            if (!alive.current || mine !== saveSeq.current) return
+            setState(status); setDraft(status.settings)
+            setSaveState({ kind: 'saved', text: t('savedAt', { time: timeText(Date.now(), locale) }) })
+          } catch (failure) {
+            if (alive.current) setSaveState({ kind: 'error', text: t('saveFailed', { message: failure.message }) })
+          }
+        }
         async function scan() {
           if (busy) return
           setBusy('scan'); setError(''); setNotice('')
@@ -399,6 +398,7 @@ window.__ModuleLoader__.load({
             h(Switch, {
               label: t('enabled'), hint: t('enabledHint'), checked: draft.enabled,
               onChange: value => edit({ enabled: value }),
+              reset: () => resetSettings('all'), resetLabel: t('resetAllDefaults'),
             }),
             h('label', { className: 'ct-field' },
               h('span', null, t('recoveryMessage')),
@@ -412,6 +412,7 @@ window.__ModuleLoader__.load({
             h(Switch, {
               label: t('startupEnabled'), checked: draft.startup.enabled,
               onChange: value => editSection('startup', { enabled: value }),
+              reset: () => resetSettings('startup'), resetLabel: t('resetDefaults'),
             }),
             h('div', { className: 'ct-grid' },
               h(NumberField, { label: t('grace'), value: draft.startup.graceSeconds, unit: t('seconds'), min: 0, max: 120, disabled: !draft.startup.enabled, onChange: value => editSection('startup', { graceSeconds: value }) }),
@@ -429,6 +430,7 @@ window.__ModuleLoader__.load({
             h(Switch, {
               label: t('transientEnabled'), checked: draft.transient.enabled,
               onChange: value => editSection('transient', { enabled: value }),
+              reset: () => resetSettings('transient'), resetLabel: t('resetDefaults'),
             }),
             h('div', { className: 'ct-grid' },
               h(NumberField, { label: t('maxAttempts'), value: draft.transient.maxAttempts, unit: t('attempts'), min: 1, max: 20, disabled: !draft.transient.enabled, onChange: value => editSection('transient', { maxAttempts: value }) }),
@@ -440,6 +442,7 @@ window.__ModuleLoader__.load({
             h(Switch, {
               label: t('failoverEnabled'), checked: draft.failover.enabled,
               onChange: value => editSection('failover', { enabled: value }),
+              reset: () => resetSettings('failover'), resetLabel: t('resetDefaults'),
             }),
             h(NumberField, { label: t('maxSwitches'), value: draft.failover.maxSwitches, unit: t('switches'), min: 0, max: 3, disabled: !draft.failover.enabled, onChange: value => editSection('failover', { maxSwitches: value }) }),
             h('span', { className: 'ct-label' }, t('fallbacks')),
@@ -479,7 +482,6 @@ window.__ModuleLoader__.load({
       )
     }
     }
-
     function apply(ctx) {
       ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'continue-task: dictionaries')
       const t = ctx.locale.bind(NS)
