@@ -50,5 +50,16 @@
         "@deepseek-ai/dsh-client-ui-settings-general"
       ]
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ceasarXuu/dsh-continue-task.git"
+  },
+  "homepage": "https://github.com/ceasarXuu/dsh-continue-task#readme",
+  "bugs": {
+    "url": "https://github.com/ceasarXuu/dsh-continue-task/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

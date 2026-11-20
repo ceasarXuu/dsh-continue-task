@@ -19,6 +19,15 @@
 
 默认只在启动后回看最近 **30 分钟**内有活动的会话，每次最多恢复 **2 个**，避免首次安装时把很久以前的旧任务全部唤醒。可在设置页调整。
 
+## 安装
+
+在 DSH 中打开 **Plugins → Add plugin**：
+
+- **npm**：输入 `@ceasarxuu/dsh-continue-task`，安装后启用。
+- **本地开发**：选择本目录（或指向本目录的链接）。
+
+安装完成后确认插件行已启用。仓库地址：<https://github.com/ceasarXuu/dsh-continue-task>。
+
 ## 使用
 
 1. 在 **Plugins** 中安装并启用本插件。
@@ -64,4 +73,4 @@ $DSH_PROFILE_DIR/continue-task/state.json
 node --test tests/*.test.js
 ```
 
-安装到当前 profile：在 DSH 内打开 **Plugins → Add plugin**，选择本目录；安装完成后确认插件行已启用。
+本地开发：在 DSH 内打开 **Plugins → Add plugin**，选择本目录；安装完成后确认插件行已启用。发布包：`@ceasarxuu/dsh-continue-task`。
