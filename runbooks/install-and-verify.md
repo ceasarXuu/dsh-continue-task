@@ -65,3 +65,11 @@ plugin_manager set_plugin target=include:continue-task enabled=true
 - `lastScanAt` 一直为 0：`sessionController.list` 或启动扫描失败，看宿主日志中的 `continue-task: scan failed`。
 - 没有自动恢复：确认总开关、对应策略开关、回看窗口；额度切换还需要至少一个备用模型。
 - 会话被自动恢复后又重复恢复：检查 `recent` 中是否有 `stopped`/`retrying`，以及日志尾部是否已有 `continue-task-` 来源的待处理消息（扫描会跳过已排队输入的会话）。
+
+## 容易踩的 DSH 事实
+
+- `session/event` 的 `surfaceOp` 在事件信封上（`event.surfaceOp`），不在 `event.data` 里；读取 `data.surfaceOp` 会让启动扫描永远看不到“有用户输入”的回合。
+- `sessionController.prompt` 拒绝空续传时抛 `RemoteError('session/agent-busy', 'generation continuation is unavailable', { reason: 'NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT' })`；`reason` 在 `error.details.reason`，不在 `message`。
+- 空内容续传只接受 `RATE_LIMIT`、`SERVER`、`TIMEOUT`、`TRANSPORT`、`EMPTY_RESPONSE`、`STREAM_CLOSED`；额度/凭据/模型类错误必须追加文本消息。
+- 冷读 `ctx.sessionQuery.readSession(id)` 会在内存中补齐 `interruptedTurnClosers`，所以 `turn/end.reason.kind === 'interrupted'` 可以可靠表示“进程崩溃时回合未闭合”。
+- 设置页主题色使用 `--dsw-alias-button-primary-fill` 与 `--dsw-alias-label-primary-inverted`；直接用 `brand-primary + #fff` 在暗色主题会白底白字。
