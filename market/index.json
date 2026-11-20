@@ -1,0 +1,80 @@
+{
+  "format": 1,
+  "title": {
+    "en": "Continue Task",
+    "zh": "任务续传"
+  },
+  "description": {
+    "en": "Automatically continue interrupted DeepSeek Harness sessions after an app restart, a network failure, or an exhausted model quota.",
+    "zh": "应用重启、网络中断或模型额度不足后，自动继续未完成的 DeepSeek Harness 会话。"
+  },
+  "metadata": {
+    "categories": {
+      "session": {
+        "title": {
+          "en": "Sessions & messages",
+          "zh": "会话与消息"
+        }
+      }
+    },
+    "labels": {
+      "recovery": {
+        "title": {
+          "en": "Recovery",
+          "zh": "恢复"
+        }
+      },
+      "network": {
+        "title": {
+          "en": "Network",
+          "zh": "网络"
+        }
+      },
+      "quota": {
+        "title": {
+          "en": "Quota",
+          "zh": "额度"
+        }
+      }
+    }
+  },
+  "plugins": [
+    {
+      "name": "@ceasarxuu/dsh-continue-task",
+      "title": {
+        "en": "Continue Task",
+        "zh": "任务续传"
+      },
+      "description": {
+        "en": "Automatically continue interrupted sessions after an app restart, a network failure, or an exhausted model quota.",
+        "zh": "应用重启、网络中断或额度耗尽后自动续传会话。"
+      },
+      "icon": "https://cdn.jsdelivr.net/gh/ceasarXuu/dsh-continue-task@main/icon.svg",
+      "author": "ceasarXuu",
+      "homepage": "https://github.com/ceasarXuu/dsh-continue-task#readme",
+      "repository": {
+        "url": "https://github.com/ceasarXuu/dsh-continue-task"
+      },
+      "metadata": {
+        "category": "session",
+        "labels": [
+          "recovery",
+          "network",
+          "quota"
+        ]
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1795161380,
+          "source": {
+            "type": "npm"
+          },
+          "engines": {
+            "dsh": ">=0.2.2-rc.5 <0.3.0-0"
+          }
+        }
+      ]
+    }
+  ]
+}

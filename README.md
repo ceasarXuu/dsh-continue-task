@@ -47,6 +47,22 @@ dsh plugin --profile <profile> add @ceasarxuu/dsh-continue-task
 
 安装完成后确认插件行已启用。仓库地址：<https://github.com/ceasarXuu/dsh-continue-task>。
 
+## 在 DSH「发现」中订阅
+
+DSH 不内置第三方插件索引。打开 **Plugins → 实验性插件 → 自定义插件索引**，添加本插件的索引源：
+
+```text
+https://cdn.jsdelivr.net/gh/ceasarXuu/dsh-continue-task@main/market/index.json
+```
+
+GitHub 直连备用：
+
+```text
+https://raw.githubusercontent.com/ceasarXuu/dsh-continue-task/main/market/index.json
+```
+
+添加后在 **发现 / Discover** 里搜索“任务续传”或“Continue Task”即可安装。索引使用 DSH 官方 format 1，已通过 `@deepseek-ai/dsh-plugin-market-index` 校验。
+
 ## 使用
 
 1. 在 **Plugins** 中安装并启用本插件。
