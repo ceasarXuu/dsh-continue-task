@@ -5,6 +5,7 @@
  */
 import { statSync } from 'node:fs'
 import { bootRecoveryFor } from './classify.js'
+import { retryDelayMs } from './settings.js'
 
 const RECENT_RECOVERY_GUARD_MS = 60_000
 
@@ -89,13 +90,18 @@ export function createScanner({ ctx, store, logger, policyFor, schedule, recent,
         inspected += 1
         const detected = bootRecoveryFor(snapshot.events)
         if (detected === null) continue
-        const decision = manual ? { ...detected, manual: true } : detected
+        const title = typeof row.projections?.values?.title === 'string' ? row.projections.values.title : ''
+        const decision = manual ? { ...detected, manual: true, title } : { ...detected, title }
         if (!policyFor(decision).enabled) continue
         if (manual) {
           cancelPending(row.sessionId)
           resetEpisode(row.sessionId)
         }
-        const delay = decision.kind === 'startup' ? 0 : decision.kind === 'failover' ? 500 : 1_000
+        const delay = decision.kind === 'startup'
+          ? 0
+          : decision.kind === 'failover'
+            ? 500
+            : retryDelayMs(1, current.transient, decision.retryAfterMs)
         if (!schedule(row.sessionId, decision, delay)) continue
         scheduled += 1
         recent({

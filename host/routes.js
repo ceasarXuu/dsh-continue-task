@@ -21,11 +21,19 @@ async function json(req) {
   const rawType = req.headers['content-type']
   const type = typeof rawType === 'string' ? rawType.split(';')[0].trim().toLowerCase() : ''
   if (type !== 'application/json') throw new SettingsError('请以 JSON 提交请求。')
+  const declared = Number(req.headers['content-length'])
+  if (Number.isFinite(declared) && declared > MAX_BODY) {
+    req.destroy()
+    throw new SettingsError('请求内容过长。')
+  }
   const chunks = []
   let size = 0
   for await (const chunk of req) {
     size += chunk.length
-    if (size > MAX_BODY) throw new SettingsError('请求内容过长。')
+    if (size > MAX_BODY) {
+      req.destroy()
+      throw new SettingsError('请求内容过长。')
+    }
     chunks.push(chunk)
   }
   let value
@@ -103,8 +111,12 @@ export function createRoute(ctx, runtime, store, logger) {
       if (req.method !== 'POST') return reply(res, 405, { error: '不支持的请求方法。' })
       const body = await json(req)
       if (path === 'settings') {
+        const candidate = body.settings
+        if (candidate === null || typeof candidate !== 'object' || Array.isArray(candidate)) {
+          return reply(res, 400, { error: '请求中缺少 settings 对象。' })
+        }
         try {
-          store.setSettings(body.settings ?? body)
+          store.setSettings(candidate)
         } catch (error) {
           if (error instanceof SettingsError) return reply(res, 400, { error: error.message })
           throw error

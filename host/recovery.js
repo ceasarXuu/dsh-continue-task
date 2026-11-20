@@ -177,6 +177,7 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
     const current = settings()
     const entry = store.session(sessionId)
     const now = Date.now()
+    let requestId
     if (decision.kind === 'transient') {
       if (entry.attempts >= current.transient.maxAttempts) {
         stop(sessionId, decision, `已达到网络重试上限（${current.transient.maxAttempts} 次）`)
@@ -203,6 +204,17 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
         stop(sessionId, decision, '子会话由父会话恢复')
         return
       }
+      if (agent.status === 'running') {
+        recent({ sessionId, kind: decision.kind, action: 'skipped', detail: '会话已在运行，交给当前输入处理' })
+        return
+      }
+      const inbox = agent.inbox
+      const pendingInput = (inbox?.nextTurn?.length ?? 0) > 0
+        || (inbox?.nextStep?.some?.(message => message.source?.kind === 'user') ?? false)
+      if (pendingInput) {
+        recent({ sessionId, kind: decision.kind, action: 'skipped', detail: '已有排队输入，交给用户消息处理' })
+        return
+      }
       let detail = decision.code ?? decision.cause ?? decision.kind
       if (decision.kind === 'failover') {
         // A retry after an admission failure (not a model failure) must keep
@@ -225,17 +237,16 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
         detail = `${route.provider}/${route.model}`
       }
       const nativeRetry = decision.kind === 'transient'
-        && decision.forceText !== true
         && NATIVE_CONTINUATION_CODES.has(decision.code)
       const content = decision.kind === 'startup'
         ? [{ type: 'text', text: current.startup.continuePrompt }]
         : nativeRetry
           ? []
           : [{ type: 'text', text: current.recoveryPrompt }]
-      const requestId = `continue-task-${randomUUID()}`
+      requestId = `continue-task-${randomUUID()}`
+      injected.set(sessionId, { requestId, at: now })
       const signal = AbortSignal.timeout(30_000)
       await ctx.sessionController.prompt({ requestId, sessionId, mode: 'queue', content }, signal)
-      injected.set(sessionId, { requestId, at: now })
       admissionFailures.delete(sessionId)
       store.note(sessionId, {
         attempts: entry.attempts + 1,
@@ -254,6 +265,9 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
       })
       log('info', `continued "${sessionId}" (${decision.kind}${decision.code === undefined ? '' : `/${decision.code}`})`)
     } catch (error) {
+      if (requestId !== undefined && injected.get(sessionId)?.requestId === requestId) {
+        injected.delete(sessionId)
+      }
       const message = errorText(error)
       const code = typeof error?.code === 'string' ? error.code : ''
       store.note(sessionId, {
@@ -265,15 +279,15 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
       })
       const failures = (admissionFailures.get(sessionId) ?? 0) + 1
       admissionFailures.set(sessionId, failures)
-      if (decision.kind === 'transient' && decision.forceText !== true
-        && message.includes('NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT')) {
-        schedule(sessionId, { ...decision, forceText: true }, 1_000)
-        recent({ sessionId, kind: decision.kind, action: 'retrying', detail: '改用续传消息重试' })
+      const reason = typeof error?.details?.reason === 'string' ? error.details.reason : ''
+      const noContinuable = reason === 'NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT'
+        || message.includes('NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT')
+      if (noContinuable) {
+        stop(sessionId, decision, message)
         return
       }
-      const canRetry = failures < ADMISSION_RETRY_LIMIT
-        && code !== 'session/not-found'
-        && !message.includes('NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT')
+      const retryLimit = decision.kind === 'startup' ? ADMISSION_RETRY_LIMIT * 2 : ADMISSION_RETRY_LIMIT
+      const canRetry = failures < retryLimit && code !== 'session/not-found'
       if (canRetry) {
         schedule(sessionId, decision, decision.kind === 'failover' ? 2_000 : 5_000)
         recent({ sessionId, kind: decision.kind, action: 'retrying', detail: message })
@@ -299,7 +313,7 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
         return
       }
       const attemptNumber = entry.attempts + 1
-      const delay = retryDelayMs(attemptNumber, policy)
+      const delay = retryDelayMs(attemptNumber, policy, decision.retryAfterMs)
       schedule(sessionId, decision, delay)
       recent({
         sessionId,
@@ -380,6 +394,7 @@ export function createRecoveryRuntime(ctx, { store, logger }) {
           dueAt: pending.dueAt,
           kind: pending.decision.kind,
           code: pending.decision.code ?? null,
+          title: typeof pending.decision.title === 'string' ? pending.decision.title : '',
           attempts: store.session(sessionId).attempts ?? 0,
         }))
         .sort((left, right) => left.dueAt - right.dueAt),

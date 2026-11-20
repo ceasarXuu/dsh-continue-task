@@ -7,7 +7,7 @@ import {
   liveRecoveryFor,
 } from '../host/classify.js'
 
-const user = { type: 'user/message', seq: 2, time: 10, data: { surfaceOp: 'append', source: { kind: 'user' }, content: [] } }
+const user = { type: 'user/message', seq: 2, time: 10, surfaceOp: 'append', data: { source: { kind: 'user' }, content: [] } }
 
 function log(turnEnd) {
   return [
@@ -65,7 +65,7 @@ test('retryable and route failures are recovered at startup', () => {
 
 test('queued input after the failed turn suppresses startup recovery', () => {
   const events = log({ type: 'turn/end', seq: 4, time: 4, data: { turn: 1, reason: { kind: 'error', error: { code: 'TRANSPORT', message: 'offline' } } } })
-  events.push({ type: 'user/message', seq: 5, time: 5, data: { surfaceOp: 'append', source: { kind: 'user' }, content: [] } })
+  events.push({ type: 'user/message', seq: 5, time: 5, surfaceOp: 'append', data: { source: { kind: 'user' }, content: [] } })
   assert.equal(bootRecoveryFor(events), null)
 })
 

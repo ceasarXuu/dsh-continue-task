@@ -70,8 +70,8 @@ export function isQuotaCode(code) {
 
 function isHumanMessage(event) {
   return event?.type === 'user/message'
-    && event.data?.surfaceOp === 'append'
-    && (event.data.source?.kind === 'user' || event.data.source?.kind === 'retry')
+    && event.surfaceOp === 'append'
+    && (event.data?.source?.kind === 'user' || event.data?.source?.kind === 'retry')
 }
 
 /**
@@ -124,7 +124,7 @@ export function bootRecoveryFor(events) {
   // A message already queued after the failed turn will run as soon as the
   // Session resumes; adding another continuation would duplicate the input.
   if (events.slice(report.endIndex + 1).some(event => (event?.type === 'user/message'
-    && event.data?.surfaceOp === 'append')
+    && event.surfaceOp === 'append')
     || (event?.type === 'agent/inbox/spliced' && (event.data?.inserted?.length ?? 0) > 0))) return null
   if (report.reason?.kind === 'interrupted') {
     return report.hadStep ? { kind: 'startup', cause: 'crash', code: null } : null
@@ -136,7 +136,16 @@ export function bootRecoveryFor(events) {
     const code = report.reason.error?.code
     const category = classifyFailure(code)
     if (category === null) return null
-    return { kind: category, cause: category === 'transient' ? 'network' : 'route', code }
+    const retryAfterMs = typeof report.reason.error?.providerRetryAfterMs === 'number'
+      && report.reason.error.providerRetryAfterMs > 0
+      ? report.reason.error.providerRetryAfterMs
+      : undefined
+    return {
+      kind: category,
+      cause: category === 'transient' ? 'network' : 'route',
+      code,
+      ...retryAfterMs === undefined ? {} : { retryAfterMs },
+    }
   }
   return null
 }
@@ -153,5 +162,14 @@ export function liveRecoveryFor(reason) {
   const code = reason.error?.code
   const category = classifyFailure(code)
   if (category === null) return null
-  return { kind: category, cause: category === 'transient' ? 'network' : 'route', code }
+  const retryAfterMs = typeof reason.error?.providerRetryAfterMs === 'number'
+    && reason.error.providerRetryAfterMs > 0
+    ? reason.error.providerRetryAfterMs
+    : undefined
+  return {
+    kind: category,
+    cause: category === 'transient' ? 'network' : 'route',
+    code,
+    ...retryAfterMs === undefined ? {} : { retryAfterMs },
+  }
 }

@@ -73,6 +73,8 @@ test('POST settings validates and persists', async () => {
     const bad = await call(fx.route, request('POST', 'settings', { settings: { startup: { maxSessions: 0 } } }))
     assert.equal(bad.code, 400)
     assert.match(bad.json.error, /最多恢复的会话数/)
+    const shape = await call(fx.route, request('POST', 'settings', { foo: 1 }))
+    assert.equal(shape.code, 400)
     const good = await call(fx.route, request('POST', 'settings', { settings: { startup: { maxSessions: 3 } } }))
     assert.equal(good.code, 200)
     assert.equal(fx.store.settings.startup.maxSessions, 3)

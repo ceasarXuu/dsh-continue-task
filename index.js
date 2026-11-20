@@ -34,16 +34,13 @@ export async function apply(ctx, config = {}) {
     await store.close()
   })(), 'continue-task: runtime')
 
-  ctx.effect(() => {
-    const webServer = ctx.get('webServer')
-    const connection = ctx.get('connection')
-    if (webServer === undefined || connection === undefined) return
-    return webServer.register({
+  ctx.inject(['webServer', 'connection'], (scope) => {
+    scope.effect(() => scope.webServer.register({
       kind: 'prefix',
       path: BASE,
-      handler: createRoute(ctx, runtime, store, logger),
-    })
-  }, 'continue-task: settings route')
+      handler: createRoute(scope, runtime, store, logger),
+    }), 'continue-task: settings route')
+  })
 
   await runtime.start()
   logger?.info(`continue-task: state directory ${dir}`)

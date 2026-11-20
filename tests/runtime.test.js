@@ -90,6 +90,25 @@ test('transient failure is retried and then stops at the attempt budget', async 
   }
 })
 
+test('a manual cancel clears the pending timer and attempt budget', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] })
+  const fx = await fixture()
+  try {
+    fx.emit(fx.agent.session, { type: 'turn/end', data: { turn: 1, reason: { kind: 'error', error: { code: 'TRANSPORT', message: 'offline' } } } })
+    assert.equal(fx.runtime.status().pending.length, 1)
+    assert.equal(fx.runtime.cancel('session-1'), true)
+    assert.equal(fx.runtime.status().pending.length, 0)
+    assert.equal(fx.store.state.sessions['session-1'], undefined)
+    mock.timers.tick(300_000)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(fx.calls.filter(call => call.type === 'prompt').length, 0)
+    assert.ok(fx.store.state.recent.some(entry => entry.action === 'cancelled'))
+  } finally {
+    await fx.close()
+    mock.timers.reset()
+  }
+})
+
 test('quota failure selects the fallback route before continuing', async () => {
   mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] })
   const fx = await fixture()
@@ -136,24 +155,49 @@ test('an admission retry keeps the already selected fallback route', async () =>
   }
 })
 
+test('a native continuation rejection is not retried into a duplicate message', async () => {
+  mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] })
+  const fx = await fixture()
+  try {
+    fx.ctx.sessionController.prompt = async request => {
+      fx.calls.push({ type: 'prompt', request })
+      throw Object.assign(new Error('generation continuation is unavailable'), {
+        code: 'session/agent-busy',
+        details: { reason: 'NO_CONTINUABLE_FAILURE_OR_PENDING_INPUT' },
+      })
+    }
+    fx.emit(fx.agent.session, { type: 'turn/end', data: { turn: 1, reason: { kind: 'error', error: { code: 'TRANSPORT', message: 'offline' } } } })
+    mock.timers.tick(6_000)
+    await new Promise(resolve => setImmediate(resolve))
+    mock.timers.tick(60_000)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(fx.calls.filter(call => call.type === 'prompt').length, 1)
+    assert.ok(fx.store.state.recent.some(entry => entry.action === 'stopped'))
+  } finally {
+    await fx.close()
+    mock.timers.reset()
+  }
+})
+
 test('manual scan continues an interrupted stored session with a text prompt', async () => {
   mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] })
   const fx = await fixture()
   try {
-    fx.setListed([{ sessionId: 'session-1', updatedAt: Date.now(), running: false, blank: false }])
+    fx.setListed([{ sessionId: 'session-1', updatedAt: Date.now(), running: false, blank: false, projections: { values: { title: '被中断的任务' } } }])
     fx.store.setSettings({
       startup: { enabled: false, graceSeconds: 0, lookbackMinutes: 30, maxSessions: 2, continuePrompt: '继续。' },
     })
     fx.ctx.sessionQuery.readSession = async () => ({
       events: [
         { type: 'turn/start', data: { turn: 1 } },
-        { type: 'user/message', data: { surfaceOp: 'append', source: { kind: 'user' }, content: [] } },
+        { type: 'user/message', surfaceOp: 'append', data: { source: { kind: 'user' }, content: [] } },
         { type: 'step/start', data: { turn: 1, step: 1 } },
         { type: 'turn/end', data: { turn: 1, reason: { kind: 'interrupted' } } },
       ],
     })
     const result = await fx.runtime.scan({ manual: true })
     assert.equal(result.scheduled, 1)
+    assert.equal(fx.runtime.status().pending[0].title, '被中断的任务')
     mock.timers.tick(0)
     await new Promise(resolve => setImmediate(resolve))
     const prompt = fx.calls.find(call => call.type === 'prompt')
