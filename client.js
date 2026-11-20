@@ -22,8 +22,8 @@ window.__ModuleLoader__.load({
       failover: '额度不足时切换模型', failoverHint: '当前服务商额度耗尽、凭据失效或模型不可用时，先切换到备用模型再继续当前任务。',
       failoverEnabled: '自动切换模型', maxSwitches: '最多切换', switches: '次', fallbacks: '备用模型', addFallback: '添加备用模型', provider: '服务商', model: '模型', effort: '推理强度', defaultEffort: '默认', remove: '移除', noFallbacks: '还没有备用模型。额度不足时不会自动切换。', catalogUnavailable: '模型目录暂不可用，请直接填写服务商和模型 ID。',
       status: '运行状态', statusHint: '待恢复的会话和最近动作。页面每 5 秒刷新一次。', pending: '待恢复', noPending: '当前没有等待中的恢复。', recent: '最近动作', noRecent: '还没有恢复动作。', lastScan: '上次扫描', never: '尚未扫描', scanning: '正在扫描…', cancel: '取消', attemptsLabel: '已尝试',
-      save: '保存设置', saving: '正在保存…', saved: '设置已保存。', reset: '撤销修改', scan: '立即扫描并恢复', scanRunning: '正在扫描…', scanDone: '扫描完成，安排了 {count} 个恢复。', scanNone: '扫描完成，没有需要恢复的会话。', scanBusy: '正在扫描，请稍后再试。',
-      loadFailed: '无法读取设置：{message}', saveFailed: '保存失败：{message}', scanFailed: '扫描失败：{message}', cancelFailed: '取消失败：{message}', dirty: '有未保存的修改。', cancelDone: '已取消该会话的待恢复动作。', cancelGone: '恢复已经开始，无法再取消。',
+      autoSave: '修改会自动保存', savingNow: '正在保存…', savedAt: '已自动保存 · {time}', invalidSettings: '有设置项无效，尚未保存。请检查数字范围或提示语。', scan: '立即扫描并恢复', scanRunning: '正在扫描…', scanDone: '扫描完成，安排了 {count} 个恢复。', scanNone: '扫描完成，没有需要恢复的会话。', scanBusy: '正在扫描，请稍后再试。',
+      loadFailed: '无法读取设置：{message}', saveFailed: '保存失败：{message}', scanFailed: '扫描失败：{message}', cancelFailed: '取消失败：{message}', cancelDone: '已取消该会话的待恢复动作。', cancelGone: '恢复已经开始，无法再取消。',
       kindStartup: '启动续传', kindTransient: '网络重试', kindFailover: '模型切换', kindScan: '扫描', kindManual: '手动', kindEvent: '事件',
       actContinued: '已继续', actScheduled: '已安排', actStopped: '已停止', actSkipped: '已跳过', actCancelled: '已取消', actRetrying: '准备重试', actFailed: '失败', actScan: '扫描',
     }
@@ -38,8 +38,8 @@ window.__ModuleLoader__.load({
       failover: 'Switch model when quota runs out', failoverHint: 'When the current provider is out of quota, its credentials fail, or the model is unavailable, switch to a fallback route and continue.',
       failoverEnabled: 'Automatic model switch', maxSwitches: 'Max switches', switches: 'switches', fallbacks: 'Fallback models', addFallback: 'Add fallback', provider: 'Provider', model: 'Model', effort: 'Reasoning effort', defaultEffort: 'Default', remove: 'Remove', noFallbacks: 'No fallback configured; quota failures will not switch models.', catalogUnavailable: 'The model catalog is unavailable; enter the provider and model id directly.',
       status: 'Runtime status', statusHint: 'Pending recoveries and recent actions. Refreshed every 5 seconds.', pending: 'Pending', noPending: 'No recovery is waiting.', recent: 'Recent actions', noRecent: 'No recovery action yet.', lastScan: 'Last scan', never: 'Never scanned', scanning: 'Scanning…', cancel: 'Cancel', attemptsLabel: 'Attempts',
-      save: 'Save settings', saving: 'Saving…', saved: 'Settings saved.', reset: 'Discard changes', scan: 'Scan and recover now', scanRunning: 'Scanning…', scanDone: 'Scan finished; {count} recovery action(s) scheduled.', scanNone: 'Scan finished; nothing to recover.', scanBusy: 'A scan is already running; try again shortly.',
-      loadFailed: 'Cannot read settings: {message}', saveFailed: 'Save failed: {message}', scanFailed: 'Scan failed: {message}', cancelFailed: 'Cancel failed: {message}', dirty: 'You have unsaved changes.', cancelDone: 'The pending recovery for that session was cancelled.', cancelGone: 'Recovery already started; it can no longer be cancelled.',
+      autoSave: 'Changes save automatically', savingNow: 'Saving…', savedAt: 'Saved · {time}', invalidSettings: 'Some settings are invalid and were not saved. Check numeric ranges or messages.', scan: 'Scan and recover now', scanRunning: 'Scanning…', scanDone: 'Scan finished; {count} recovery action(s) scheduled.', scanNone: 'Scan finished; nothing to recover.', scanBusy: 'A scan is already running; try again shortly.',
+      loadFailed: 'Cannot read settings: {message}', saveFailed: 'Save failed: {message}', scanFailed: 'Scan failed: {message}', cancelFailed: 'Cancel failed: {message}', cancelDone: 'The pending recovery for that session was cancelled.', cancelGone: 'Recovery already started; it can no longer be cancelled.',
       kindStartup: 'Startup', kindTransient: 'Network retry', kindFailover: 'Model switch', kindScan: 'Scan', kindManual: 'Manual', kindEvent: 'Event',
       actContinued: 'Continued', actScheduled: 'Scheduled', actStopped: 'Stopped', actSkipped: 'Skipped', actCancelled: 'Cancelled', actRetrying: 'Retrying', actFailed: 'Failed', actScan: 'Scan',
     }
@@ -60,45 +60,19 @@ window.__ModuleLoader__.load({
 
     const css = `
       .ct-page { display: grid; gap: 14px; max-width: 780px; color: var(--dsw-alias-label-primary); }
-      .ct-head h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
-      .ct-sub { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 13px; line-height: 1.6; }
-      .ct-section { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-layer-1); }
-      .ct-section h3 { margin: 0; font-size: 14px; font-weight: 600; }
-      .ct-hint { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 1.6; }
-      .ct-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-      .ct-row-text { min-width: 0; display: grid; gap: 3px; }
-      .ct-label { font-size: 13px; }
-      .ct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; }
-      .ct-field { display: grid; gap: 4px; min-width: 0; }
-      .ct-field > span { color: var(--dsw-alias-label-secondary); font-size: 12px; }
+      .ct-head h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; } .ct-sub { margin: 0; color: var(--dsw-alias-label-secondary); font-size: 13px; line-height: 1.6; }
+      .ct-section { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; background: var(--dsw-alias-bg-layer-1); } .ct-section h3 { margin: 0; font-size: 14px; font-weight: 600; } .ct-hint { color: var(--dsw-alias-label-secondary); font-size: 12px; line-height: 1.6; }
+      .ct-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; } .ct-row-text { min-width: 0; display: grid; gap: 3px; } .ct-label { font-size: 13px; }
+      .ct-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; } .ct-field { display: grid; gap: 4px; min-width: 0; } .ct-field > span { color: var(--dsw-alias-label-secondary); font-size: 12px; }
       .ct-page input, .ct-page select, .ct-page textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 6px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font: inherit; font-size: 13px; }
-      .ct-page input:focus, .ct-page select:focus, .ct-page textarea:focus { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: -1px; }
-      .ct-page textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
-      .ct-switch { position: relative; flex: none; width: 38px; height: 22px; padding: 0; border: 0; border-radius: 999px; background: var(--dsw-alias-border-l2); cursor: pointer; transition: background .15s; }
-      .ct-switch.ct-on { background: var(--dsw-alias-brand-primary); }
-      .ct-switch.ct-on .ct-knob { background: var(--dsw-alias-label-primary-inverted, #fff); }
-      .ct-knob { position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: inset-inline-start .15s; }
-      .ct-switch.ct-on .ct-knob { inset-inline-start: 18px; }
-      .ct-fallback { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: end; }
-      .ct-fallback-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; }
-      .ct-index { align-self: center; color: var(--dsw-alias-label-secondary); font-size: 12px; text-align: center; }
-      .ct-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-      .ct-btn, .ct-link { font: inherit; cursor: pointer; }
-      .ct-btn { padding: 7px 12px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 7px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font-size: 13px; }
-      .ct-btn:disabled { opacity: .55; cursor: default; }
-      .ct-btn.ct-primary { border-color: transparent; background: var(--dsw-alias-button-primary-fill, var(--dsw-alias-brand-primary)); color: var(--dsw-alias-label-primary-inverted, #fff); }
-      .ct-footer { position: sticky; bottom: 0; z-index: 1; padding-block: 10px 2px; border-block-start: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-layer-1); }
-      .ct-link { padding: 0; border: 0; background: none; color: var(--dsw-alias-brand-primary); font-size: 12px; }
-      .ct-link:disabled { opacity: .5; cursor: default; }
-      .ct-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
-      .ct-item { display: grid; gap: 2px; padding-block-start: 6px; border-block-start: 1px solid var(--dsw-alias-border-l1); font-size: 12px; }
-      .ct-item:first-child { padding-block-start: 0; border-block-start: 0; }
-      .ct-item-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-      .ct-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--dsw-alias-label-secondary); }
-      .ct-badge { padding: 1px 6px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-size: 11px; }
-      .ct-omit { color: var(--dsw-alias-label-secondary); font-size: 12px; }
-      .ct-error { color: var(--dsw-alias-state-error-primary); font-size: 12px; }
-      .ct-ok { color: var(--dsw-alias-state-success-primary); font-size: 12px; }
+      .ct-page input:focus, .ct-page select:focus, .ct-page textarea:focus { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: -1px; } .ct-page textarea { min-height: 74px; resize: vertical; line-height: 1.5; }
+      .ct-switch { position: relative; flex: none; width: 38px; height: 22px; padding: 0; border: 0; border-radius: 999px; background: var(--dsw-alias-border-l2); cursor: pointer; transition: background .15s; } .ct-switch.ct-on { background: var(--dsw-alias-brand-primary); }
+      .ct-knob { position: absolute; inset-block-start: 2px; inset-inline-start: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: inset-inline-start .15s; } .ct-switch.ct-on .ct-knob { inset-inline-start: 18px; background: var(--dsw-alias-label-primary-inverted, #fff); }
+      .ct-fallback { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 8px; align-items: end; } .ct-fallback-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; } .ct-index { align-self: center; color: var(--dsw-alias-label-secondary); font-size: 12px; text-align: center; }
+      .ct-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .ct-btn, .ct-link { font: inherit; cursor: pointer; }
+      .ct-btn { padding: 7px 12px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 7px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-primary); font-size: 13px; } .ct-btn:disabled { opacity: .55; cursor: default; } .ct-link { padding: 0; border: 0; background: none; color: var(--dsw-alias-brand-primary); font-size: 12px; } .ct-link:disabled { opacity: .5; cursor: default; }
+      .ct-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; } .ct-item { display: grid; gap: 2px; padding-block-start: 6px; border-block-start: 1px solid var(--dsw-alias-border-l1); font-size: 12px; } .ct-item:first-child { padding-block-start: 0; border-block-start: 0; } .ct-item-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+      .ct-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--dsw-alias-label-secondary); } .ct-badge { padding: 1px 6px; border-radius: 999px; background: var(--dsw-alias-bg-layer-2); color: var(--dsw-alias-label-secondary); font-size: 11px; } .ct-omit { color: var(--dsw-alias-label-secondary); font-size: 12px; } .ct-error { color: var(--dsw-alias-state-error-primary); font-size: 12px; } .ct-ok { color: var(--dsw-alias-state-success-primary); font-size: 12px; }
     `
 
     function useLocale(ctx) {
@@ -122,13 +96,44 @@ window.__ModuleLoader__.load({
       return new Intl.DateTimeFormat(locale, { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value))
     }
 
+    const SETTING_RANGES = [
+      [0, 120], [1, 10080], [1, 10], [1, 20], [5, 3600], [5, 86400], [1, 1440], [0, 3],
+    ]
+
+    function invalidSettings(settings) {
+      const values = [
+        settings.startup.graceSeconds, settings.startup.lookbackMinutes, settings.startup.maxSessions,
+        settings.transient.maxAttempts, settings.transient.baseDelaySeconds, settings.transient.maxDelaySeconds,
+        settings.transient.maxWaitMinutes, settings.failover.maxSwitches,
+      ]
+      if (values.some((value, index) => !Number.isInteger(value)
+        || value < SETTING_RANGES[index][0] || value > SETTING_RANGES[index][1])) return true
+      return !settings.recoveryPrompt.trim() || !settings.startup.continuePrompt.trim()
+    }
+
+    function settingsPayload(settings) {
+      return {
+        ...settings,
+        recoveryPrompt: settings.recoveryPrompt.trim(),
+        startup: { ...settings.startup, continuePrompt: settings.startup.continuePrompt.trim() },
+        failover: {
+          ...settings.failover,
+          fallbacks: settings.failover.fallbacks
+            .filter(route => route.provider?.trim() && route.model?.trim())
+            .map(route => ({
+              provider: route.provider.trim(),
+              model: route.model.trim(),
+              ...route.reasoningEffort ? { reasoningEffort: route.reasoningEffort } : {},
+            })),
+        },
+      }
+    }
     function Section({ title, hint, children }) {
       return h('section', { className: 'ct-section' },
         h('h3', null, title),
         hint ? h('p', { className: 'ct-hint' }, hint) : null,
         children)
     }
-
     function Switch({ label, hint, checked, onChange }) {
       const toggle = () => onChange(!checked)
       return h('div', { className: 'ct-row' },
@@ -141,13 +146,13 @@ window.__ModuleLoader__.load({
           onClick: toggle,
         }, h('span', { className: 'ct-knob' })))
     }
-
     function NumberField({ label, value, unit, min, max, disabled, onChange }) {
       return h('label', { className: 'ct-field' },
         h('span', null, label),
         h('input', {
           type: 'number', value: value, min, max, step: 1, disabled,
           onChange: event => {
+            if (event.target.value === '') return
             const next = Number(event.target.value)
             if (Number.isInteger(next)) onChange(next)
           },
@@ -224,29 +229,17 @@ window.__ModuleLoader__.load({
           : null)
     }
 
+    function dynamicLabel(t, key, fallback) {
+      const text = t(key)
+      return text === key ? fallback : text
+    }
+
     function actionLabel(t, action) {
-      switch (action) {
-        case 'continued': return t('actContinued')
-        case 'scheduled': return t('actScheduled')
-        case 'stopped': return t('actStopped')
-        case 'skipped': return t('actSkipped')
-        case 'cancelled': return t('actCancelled')
-        case 'retrying': return t('actRetrying')
-        case 'failed': return t('actFailed')
-        case 'scan': return t('actScan')
-        default: return action
-      }
+      return dynamicLabel(t, 'act' + action.charAt(0).toUpperCase() + action.slice(1), action)
     }
 
     function kindLabel(t, kind) {
-      switch (kind) {
-        case 'startup': return t('kindStartup')
-        case 'transient': return t('kindTransient')
-        case 'failover': return t('kindFailover')
-        case 'scan': return t('kindScan')
-        case 'manual': return t('kindManual')
-        default: return t('kindEvent')
-      }
+      return dynamicLabel(t, 'kind' + kind.charAt(0).toUpperCase() + kind.slice(1), t('kindEvent'))
     }
 
     function makePage(ctx, t) {
@@ -260,13 +253,26 @@ window.__ModuleLoader__.load({
         const [error, setError] = React.useState('')
         const [notice, setNotice] = React.useState('')
         const [busy, setBusy] = React.useState('')
-        const [dirty, setDirty] = React.useState(false)
+        const [saveState, setSaveState] = React.useState({ kind: 'idle', text: '' })
         const alive = React.useRef(true)
-        void revision
+        const saveTimer = React.useRef()
+        const saveSeq = React.useRef(0)
+        const draftRef = React.useRef(null)
+        draftRef.current = draft
+        useLocale(ctx)
 
         React.useEffect(() => {
           alive.current = true
-          return () => { alive.current = false }
+          return () => {
+            alive.current = false
+            if (saveTimer.current === undefined) return
+            clearTimeout(saveTimer.current)
+            saveTimer.current = undefined
+            const next = draftRef.current
+            if (next !== null && !invalidSettings(next)) {
+              void api('settings', { settings: settingsPayload(next) }).catch(() => {})
+            }
+          }
         }, [])
 
         React.useEffect(() => {
@@ -298,35 +304,49 @@ window.__ModuleLoader__.load({
           return () => controller.abort()
         }, [])
 
-        React.useEffect(() => {
-          if (!notice) return
-          const timer = setTimeout(() => setNotice(''), 4_000)
-          return () => clearTimeout(timer)
-        }, [notice])
-
         if (state === null || draft === null) {
           return h('div', { className: 'ct-page' },
             h('p', { className: error ? 'ct-error' : 'ct-omit' }, error || '…'))
         }
-        const edit = patch => { setError(''); setDirty(true); setDraft(current => ({ ...current, ...patch })) }
-        const editSection = (name, patch) => {
+        function queueSave(next) {
+          draftRef.current = next
           setError('')
-          setDirty(true)
-          setDraft(current => ({ ...current, [name]: { ...current[name], ...patch } }))
+          setNotice('')
+          if (invalidSettings(next)) {
+            clearTimeout(saveTimer.current)
+            saveTimer.current = undefined
+            saveSeq.current += 1
+            setSaveState({ kind: 'error', text: t('invalidSettings') })
+            return
+          }
+          const mine = ++saveSeq.current
+          setSaveState({ kind: 'saving', text: t('savingNow') })
+          clearTimeout(saveTimer.current)
+          saveTimer.current = setTimeout(() => {
+            saveTimer.current = undefined
+            void api('settings', { settings: settingsPayload(next) })
+              .then(status => {
+                if (!alive.current || mine !== saveSeq.current) return
+                setState(status)
+                setSaveState({ kind: 'saved', text: t('savedAt', { time: timeText(Date.now(), locale) }) })
+              })
+              .catch(failure => {
+                if (alive.current && mine === saveSeq.current) {
+                  setSaveState({ kind: 'error', text: t('saveFailed', { message: failure.message }) })
+                }
+              })
+          }, 300)
         }
 
-        async function save() {
-          if (busy) return
-          setBusy('save'); setError(''); setNotice('')
-          try {
-            const next = await api('settings', { settings: draft })
-            if (!alive.current) return
-            setState(next); setDraft(next.settings); setDirty(false); setNotice(t('saved'))
-          } catch (failure) {
-            if (alive.current) setError(t('saveFailed', { message: failure.message }))
-          } finally {
-            if (alive.current) setBusy('')
-          }
+        const edit = patch => {
+          const next = { ...draft, ...patch }
+          setDraft(next)
+          queueSave(next)
+        }
+        const editSection = (name, patch) => {
+          const next = { ...draft, [name]: { ...draft[name], ...patch } }
+          setDraft(next)
+          queueSave(next)
         }
 
         async function scan() {
@@ -368,6 +388,12 @@ window.__ModuleLoader__.load({
           h('header', { className: 'ct-head' },
             h('h2', null, t('title')),
             h('p', { className: 'ct-sub' }, t('subtitle'))),
+          h('p', {
+            className: saveState.kind === 'error' ? 'ct-error' : saveState.kind === 'saved' ? 'ct-ok' : 'ct-omit',
+            role: 'status', 'aria-live': 'polite',
+          }, saveState.kind === 'idle' ? t('autoSave') : saveState.text),
+          error ? h('p', { className: 'ct-error', role: 'alert' }, error) : null,
+          notice ? h('p', { className: 'ct-ok', role: 'status' }, notice) : null,
 
           h(Section, null,
             h(Switch, {
@@ -450,15 +476,8 @@ window.__ModuleLoader__.load({
                   item.sessionId ? h('span', { className: 'ct-code' }, item.sessionId.slice(0, 12)) : null,
                   h('span', { className: 'ct-omit' }, timeText(item.at, locale))),
                 item.detail ? h('span', { className: 'ct-hint' }, item.detail) : null)))),
-
-          h('div', { className: 'ct-actions ct-footer' },
-            h('button', { type: 'button', className: 'ct-btn ct-primary', disabled: busy !== '' || !dirty, onClick: save },
-              busy === 'save' ? t('saving') : t('save')),
-            h('button', { type: 'button', className: 'ct-btn', disabled: busy !== '' || !dirty, onClick: () => { setDraft(state.settings); setDirty(false); setError('') } }, t('reset')),
-            dirty ? h('span', { className: 'ct-omit' }, t('dirty')) : null,
-            error ? h('span', { className: 'ct-error', role: 'alert' }, error) : null,
-            notice ? h('span', { className: 'ct-ok', role: 'status' }, notice) : null))
-      }
+      )
+    }
     }
 
     function apply(ctx) {

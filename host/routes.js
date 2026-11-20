@@ -121,6 +121,7 @@ export function createRoute(ctx, runtime, store, logger) {
           if (error instanceof SettingsError) return reply(res, 400, { error: error.message })
           throw error
         }
+        await store.flush()
         return reply(res, 200, runtime.status())
       }
       if (path === 'scan') {
