@@ -19,11 +19,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
 
       - name: Run tests
         run: node --test tests/*.test.js
@@ -34,7 +38,7 @@ jobs:
           version="v$(node -p 'require("./package.json").version')"
           test "$version" = "$GITHUB_REF_NAME"
 
-      - name: Configure npm token when the repository provides one
+      - name: Configure a one-time bootstrap token when present
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN || secrets.NODE_AUTH_TOKEN }}
         run: |
@@ -54,4 +58,4 @@ jobs:
 
       - name: Publish
         if: steps.check.outputs.published == 'false'
-        run: npm publish --access public --provenance --registry=https://registry.npmjs.org/
+        run: npm publish --access public --registry=https://registry.npmjs.org/
