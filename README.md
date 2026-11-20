@@ -4,6 +4,8 @@
 
 所有恢复都通过普通的会话消息完成，因此对话里能看到“为什么继续、继续了什么”，会话日志仍然是唯一事实来源。
 
+[![Listed on dsh-plugin.org](https://dsh-plugin.org/badges/listed.svg)](https://dsh-plugin.org/zh/plugins/ceasarxuu/dsh-continue-task)
+
 ## 恢复策略
 
 | 中断情形 | 判定依据 | 默认动作 |
@@ -21,10 +23,27 @@
 
 ## 安装
 
-在 DSH 中打开 **Plugins → Add plugin**：
+### 插件市场
 
-- **npm**：输入 `@ceasarxuu/dsh-continue-task`，安装后启用。
-- **本地开发**：选择本目录（或指向本目录的链接）。
+在 DSH 的 **Plugins → Add plugin** 输入包名：
+
+```text
+@ceasarxuu/dsh-continue-task
+```
+
+也可以在 [dsh-plugin.org 的收录页](https://dsh-plugin.org/zh/plugins/ceasarxuu/dsh-continue-task) 查看介绍，或在安装了 DSH Plugin Hub 后搜索“任务续传 / dsh-continue-task”。
+
+### 命令行
+
+```sh
+dsh plugin --profile <profile> add @ceasarxuu/dsh-continue-task
+```
+
+`<profile>` 换成实际 profile 名：浏览器版通常是 `web`，桌面版通常是 `desktop`；可用 `ls ~/.dsh/profiles/` 查看。
+
+### 本地开发
+
+在 **Plugins → Add plugin** 选择本目录（或指向本目录的链接）。
 
 安装完成后确认插件行已启用。仓库地址：<https://github.com/ceasarXuu/dsh-continue-task>。
 
