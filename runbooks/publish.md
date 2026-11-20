@@ -58,6 +58,15 @@ npm trust github @ceasarxuu/dsh-continue-task \
 
 如果后续再建新包，也可以给仓库添加 `NPM_TOKEN`/`NODE_AUTH_TOKEN` secret 让 workflow 完成首次发布，package 在 npm 上存在后再配置 trusted publishing 并删除 token。GitHub secret 只能写、不能通过 API 读回；不要尝试从其他仓库复制 secret 值。
 
+## 分发与发现
+
+- **dsh-plugin.org（社区插件市场）**：自动扫描公开仓库、`dsh-plugin` topic 和根目录 `package.json`，当前条目已标记“已验证”：<https://dsh-plugin.org/zh/plugins/ceasarxuu/dsh-continue-task>。无需手工提交；README 变更后下一轮刷新会同步。
+- **DSH 官方「发现」**：官方不内置第三方索引，但支持 format 1 的索引源。本仓库的索引在 [`market/index.json`](../market/index.json)，订阅地址：
+  - `https://cdn.jsdelivr.net/gh/ceasarXuu/dsh-continue-task@main/market/index.json`
+  - 备用：`https://raw.githubusercontent.com/ceasarXuu/dsh-continue-task/main/market/index.json`
+- 每次发新版本后，记得把 `market/index.json` 的 `versions` 加上新版本并把 `publishTimestamp` 改成该版本的 npm 发布时间；然后用 `@deepseek-ai/dsh-plugin-market-index` 的 `parseMarketIndex` 校验。
+- awesome-dsh-plugin-pro 的“作者自荐”要求仓库 Star 数 > 10；当前未达到，暂不提交，等社区增长后再走该渠道。
+
 ## 验证
 
 ```sh
