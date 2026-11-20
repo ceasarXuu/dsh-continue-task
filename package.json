@@ -1,0 +1,54 @@
+{
+  "name": "@ceasarxuu/dsh-continue-task",
+  "version": "0.1.0",
+  "description": "Automatically continues interrupted DeepSeek Harness sessions after an app restart, a network failure, or an exhausted model quota.",
+  "type": "module",
+  "license": "MIT",
+  "author": "ceasarXuu",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "host",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "docs",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": ">=0.2.2-rc.5 <0.3.0-0",
+    "node": ">=22"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "recovery",
+    "continue",
+    "resume",
+    "network",
+    "quota",
+    "failover"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-general"
+      ]
+    }
+  }
+}

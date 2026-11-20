@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Task recovery",
+    "description": "Automatically continues interrupted sessions after an app restart, a network failure, or an exhausted quota, and can switch to a fallback model when the current one runs out.",
+    "detail": "docs/DETAIL.md"
+  }
+}
