@@ -14,6 +14,8 @@
   - permissions: publish、stage publish
   - trust id: `4cd65c3b-1d72-459c-883a-95d24bf42a4f`
 - 仓库没有 `NPM_TOKEN` secret；后续发布由 `publish.yml` 使用 `id-token: write` 走 OIDC
+- GitHub Release：<https://github.com/ceasarXuu/dsh-continue-task/releases/tag/v0.1.0>
+- Release 触发的 workflow run `44701770837` 已通过；因为 `0.1.0` 已存在，Publish 步骤按设计跳过
 
 ## 发布新版本
 
