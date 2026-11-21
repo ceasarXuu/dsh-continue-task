@@ -102,6 +102,14 @@ $DSH_PROFILE_DIR/continue-task/state.json
 - 不在 DSH 原生可续传集合内的错误（例如模型返回格式异常）会追加一条续传消息来恢复，而不是使用原生的空重试。
 - 过期会话的文件修改时间来自持久化后端；没有本地文件位置的远程存储只能回退到会话列表的最近提示时间。
 
+## 推广片
+
+30 秒横版（1920×1080，无旁白，亮色发布风格）：
+
+[观看 / 下载 MP4](https://github.com/ceasarXuu/dsh-continue-task/releases/download/v0.1.0/dsh-continue-task-promo.mp4)
+
+Remotion 源码、时间线和配乐生成脚本见 [`promo/`](promo/)。
+
 ## 开发
 
 ```sh
