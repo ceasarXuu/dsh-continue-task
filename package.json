@@ -1,6 +1,6 @@
 {
   "name": "@ceasarxuu/dsh-continue-task",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Automatically continues interrupted DeepSeek Harness sessions after an app restart, a network failure, or an exhausted model quota.",
   "type": "module",
   "license": "MIT",
