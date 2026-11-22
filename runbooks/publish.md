@@ -15,7 +15,8 @@
   - trust id: `4cd65c3b-1d72-459c-883a-95d24bf42a4f`
 - 仓库没有 `NPM_TOKEN` secret；后续发布由 `publish.yml` 使用 `id-token: write` 走 OIDC
 - GitHub Release：<https://github.com/ceasarXuu/dsh-continue-task/releases/tag/v0.1.1>
-- Release 触发的 workflow `45028396980`（attempt 2）已通过；因为 `0.1.1` 已存在，Publish 步骤按设计跳过
+- Release 触发的 workflow `45028396980`（attempt 3）已通过；因为 `0.1.1` 已存在，Publish 步骤按设计跳过
+- 0.1.1 的 npm 发布使用本地浏览器 2FA：GitHub Actions 的 OIDC token exchange 仍返回 `package not found`，但 trusted publisher 配置存在（file `publish.yml`、repo、publish 权限均已核对）。后续发版若 OIDC 继续失败，先用本地发布，再重跑 release workflow 让版本检查通过。
 
 ## 发布新版本
 
