@@ -32,6 +32,11 @@ jobs:
           npm install -g npm@11
           npm --version
 
+      - name: Check OIDC environment
+        run: |
+          node -e "console.log('OIDC URL:', process.env.ACTIONS_ID_TOKEN_REQUEST_URL ? 'set' : 'missing'); console.log('OIDC token:', process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN ? 'set' : 'missing')"
+          npm config get registry
+
       - name: Run tests
         run: node --test tests/*.test.js
 
