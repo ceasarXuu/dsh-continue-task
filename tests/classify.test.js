@@ -41,10 +41,28 @@ test('crash-interrupted work is continued at startup', () => {
   assert.deepEqual(recovery, { kind: 'startup', cause: 'crash', code: null })
 })
 
-test('a clean shutdown mid-turn is continued at startup', () => {
+test('a clean shutdown with an open step is continued at startup', () => {
   const reason = { kind: 'aborted', reason: { kind: 'disposed' } }
   const recovery = bootRecoveryFor(log({ type: 'turn/end', seq: 4, time: 4, data: { turn: 1, reason } }))
   assert.deepEqual(recovery, { kind: 'startup', cause: 'app-exit', code: null })
+})
+
+test('a clean shutdown at a step boundary is not continued', () => {
+  const reason = { kind: 'aborted', reason: { kind: 'disposed' } }
+  const events = log({ type: 'turn/end', seq: 5, time: 5, data: { turn: 1, reason } })
+  events.splice(3, 0, { type: 'step/end', seq: 4, time: 4, data: { turn: 1, step: 1 } })
+  const recovery = bootRecoveryFor(events)
+  assert.equal(recovery, null)
+})
+
+test('our own continuation is not treated as fresh human work', () => {
+  const events = [
+    { type: 'turn/start', seq: 1, time: 1, data: { turn: 1 } },
+    { type: 'user/message', seq: 2, time: 2, surfaceOp: 'append', data: { source: { kind: 'user', rpcId: 'continue-task-abc' }, content: [] } },
+    { type: 'step/start', seq: 3, time: 3, data: { turn: 1, step: 1 } },
+    { type: 'turn/end', seq: 4, time: 4, data: { turn: 1, reason: { kind: 'interrupted' } } },
+  ]
+  assert.equal(bootRecoveryFor(events), null)
 })
 
 test('a user stop is never continued', () => {

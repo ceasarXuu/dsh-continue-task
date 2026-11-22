@@ -69,9 +69,13 @@ export function isQuotaCode(code) {
 }
 
 function isHumanMessage(event) {
-  return event?.type === 'user/message'
-    && event.surfaceOp === 'append'
-    && (event.data?.source?.kind === 'user' || event.data?.source?.kind === 'retry')
+  const source = event?.data?.source
+  if (source?.kind !== 'user' && source?.kind !== 'retry') return false
+  // Our own continuation messages are stored as user messages. After a Host
+  // restart there is no in-memory marker, so their rpc id is the durable way
+  // to keep them from counting as fresh human work (which could loop).
+  if (typeof source.rpcId === 'string' && source.rpcId.startsWith('continue-task-')) return false
+  return event?.type === 'user/message' && event.surfaceOp === 'append'
 }
 
 /**
@@ -98,11 +102,14 @@ export function lastTurnReport(events) {
   }
   const ending = events[endIndex]
   const tail = events.slice(Math.max(0, startIndex), endIndex + 1)
+  const lastStepStart = tail.reduce((last, event, index) => event?.type === 'step/start' ? index : last, -1)
+  const lastStepEnd = tail.reduce((last, event, index) => event?.type === 'step/end' ? index : last, -1)
   return {
     endIndex,
     turn: ending.data?.turn,
     reason: ending.data?.reason,
-    hadStep: tail.some(event => event?.type === 'step/start'),
+    hadStep: lastStepStart >= 0,
+    hasOpenStep: lastStepStart > lastStepEnd,
     hadHuman: tail.some(isHumanMessage),
     hadAssistant: tail.some(event => event?.type === 'assistant/message'),
     hadToolCall: tail.some(event => event?.type === 'tool/call'),
@@ -130,7 +137,10 @@ export function bootRecoveryFor(events) {
     return report.hadStep ? { kind: 'startup', cause: 'crash', code: null } : null
   }
   if (report.reason?.kind === 'aborted' && report.reason.reason?.kind === 'disposed') {
-    return report.hadStep ? { kind: 'startup', cause: 'app-exit', code: null } : null
+    // A clean shutdown usually stops between steps. Treating that boundary as
+    // unfinished work resumes turns the user already saw finish; only a step
+    // that was still open when the Host disposed is unambiguous work in flight.
+    return report.hasOpenStep ? { kind: 'startup', cause: 'app-exit', code: null } : null
   }
   if (report.reason?.kind === 'error') {
     const code = report.reason.error?.code
