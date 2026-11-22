@@ -27,6 +27,11 @@ jobs:
         with:
           node-version: 22
 
+      - name: Upgrade npm for trusted publishing
+        run: |
+          npm install -g npm@11
+          npm --version
+
       - name: Run tests
         run: node --test tests/*.test.js
 
