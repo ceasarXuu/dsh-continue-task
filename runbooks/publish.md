@@ -5,8 +5,8 @@
 
 ## 当前状态（2026-11-20）
 
-- `0.1.0` 已发布到 npm，`npm view @ceasarxuu/dsh-continue-task version` 返回 `0.1.0`
-- `npm install @ceasarxuu/dsh-continue-task@0.1.0` 已在临时目录验证
+- `0.1.1` 已发布到 npm，`npm view @ceasarxuu/dsh-continue-task version` 返回 `0.1.1`
+- `npm install @ceasarxuu/dsh-continue-task@0.1.1` 已在临时目录验证
 - npm **Trusted Publishing** 已配置：
   - provider: GitHub Actions
   - repository: `ceasarXuu/dsh-continue-task`
@@ -14,8 +14,8 @@
   - permissions: publish、stage publish
   - trust id: `4cd65c3b-1d72-459c-883a-95d24bf42a4f`
 - 仓库没有 `NPM_TOKEN` secret；后续发布由 `publish.yml` 使用 `id-token: write` 走 OIDC
-- GitHub Release：<https://github.com/ceasarXuu/dsh-continue-task/releases/tag/v0.1.0>
-- Release 触发的 workflow run `44701770837` 已通过；因为 `0.1.0` 已存在，Publish 步骤按设计跳过
+- GitHub Release：<https://github.com/ceasarXuu/dsh-continue-task/releases/tag/v0.1.1>
+- Release 触发的 workflow `45028396980`（attempt 2）已通过；因为 `0.1.1` 已存在，Publish 步骤按设计跳过
 
 ## 发布新版本
 
@@ -73,5 +73,5 @@ npm trust github @ceasarxuu/dsh-continue-task \
 npm view @ceasarxuu/dsh-continue-task version
 npm view @ceasarxuu/dsh-continue-task dist-tags --json
 tmp=$(mktemp -d)
-cd "$tmp" && npm init -y >/dev/null && npm install @ceasarxuu/dsh-continue-task@0.1.0 --ignore-scripts
+cd "$tmp" && npm init -y >/dev/null && npm install @ceasarxuu/dsh-continue-task@0.1.1 --ignore-scripts
 ```
