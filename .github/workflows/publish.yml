@@ -26,7 +26,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
 
       - name: Run tests
         run: node --test tests/*.test.js
@@ -36,14 +35,6 @@ jobs:
         run: |
           version="v$(node -p 'require("./package.json").version')"
           test "$version" = "$GITHUB_REF_NAME"
-
-      - name: Configure a one-time bootstrap token when present
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN || secrets.NODE_AUTH_TOKEN }}
-        run: |
-          if [ -n "$NPM_TOKEN" ]; then
-            npm config set //registry.npmjs.org/:_authToken "$NPM_TOKEN"
-          fi
 
       - name: Check whether this version is already published
         id: check
