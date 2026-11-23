@@ -48,20 +48,26 @@ async function json(req) {
   return value
 }
 
-function localBrowser(ctx, req, res) {
-  const connection = ctx.connection
-  const admission = connection?.admit(req)
-  if (admission?.rejection !== undefined) {
-    reply(res, admission.rejection, { error: 'DSH 未授权当前浏览器访问。' })
-    return false
+function localBrowser(ctx, req, res, peer) {
+  // DSH 0.2.3 authenticates the route before dispatch and passes the admitted
+  // Peer to the handler; that Peer is the authenticated principal, not the
+  // in-process Connection peer. Older builds dispatch without one and rely on
+  // admit() plus the browserPeer comparison.
+  if (peer === undefined) {
+    const connection = ctx.connection
+    const admission = connection?.admit(req)
+    if (admission?.rejection !== undefined) {
+      reply(res, admission.rejection, { error: 'DSH 未授权当前浏览器访问。' })
+      return false
+    }
+    const browserPeer = connection?.browserPeer
+    if (browserPeer !== undefined && admission?.peer !== browserPeer) {
+      reply(res, 403, { error: '任务续传设置仅向本机 DSH 浏览器界面开放。' })
+      return false
+    }
   }
-  const browserPeer = connection?.browserPeer
   const address = req.socket?.remoteAddress ?? ''
   const loopback = address === '::1' || /^(?:::ffff:)?127\./i.test(address)
-  if (browserPeer !== undefined && admission?.peer !== browserPeer) {
-    reply(res, 403, { error: '任务续传设置仅向本机 DSH 浏览器界面开放。' })
-    return false
-  }
   if (!loopback) {
     reply(res, 403, { error: '任务续传设置仅向本机 DSH 浏览器界面开放。' })
     return false
@@ -112,9 +118,9 @@ function resetSettings(scope, current) {
  * @returns an HTTP handler for `BASE`.
  */
 export function createRoute(ctx, runtime, store, logger, authorize = () => ctx) {
-  return async (req, res) => {
+  return async (req, res, peer) => {
     try {
-      if (!localBrowser(authorize(), req, res)) return
+      if (!localBrowser(authorize(), req, res, peer)) return
       const path = new URL(req.url, 'http://localhost').pathname.slice(BASE.length + 1)
       if (req.method === 'GET') {
         if (path === 'state') return reply(res, 200, runtime.status())
