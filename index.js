@@ -35,10 +35,18 @@ export async function apply(ctx, config = {}) {
   })(), 'continue-task: runtime')
 
   ctx.inject(['webServer', 'connection'], (scope) => {
+    // DSH 0.2.3 verifies requests through the nested `connection.authentication`
+    // service, which only a Context that injects it may read. Older builds need
+    // no such inject, so the route falls back to the injected scope itself.
+    let authorized
+    scope.inject(['connection.authentication'], inner => {
+      authorized = inner
+      return () => { authorized = undefined }
+    })
     scope.effect(() => scope.webServer.register({
       kind: 'prefix',
       path: BASE,
-      handler: createRoute(scope, runtime, store, logger),
+      handler: createRoute(scope, runtime, store, logger, () => authorized ?? scope),
     }), 'continue-task: settings route')
   })
 

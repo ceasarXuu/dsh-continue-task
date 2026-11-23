@@ -49,12 +49,13 @@ async function json(req) {
 }
 
 function localBrowser(ctx, req, res) {
-  const admission = ctx.connection?.admit(req)
+  const connection = ctx.connection
+  const admission = connection?.admit(req)
   if (admission?.rejection !== undefined) {
     reply(res, admission.rejection, { error: 'DSH 未授权当前浏览器访问。' })
     return false
   }
-  const browserPeer = ctx.connection?.browserPeer
+  const browserPeer = connection?.browserPeer
   const address = req.socket?.remoteAddress ?? ''
   const loopback = address === '::1' || /^(?:::ffff:)?127\./i.test(address)
   if (browserPeer !== undefined && admission?.peer !== browserPeer) {
@@ -105,12 +106,15 @@ function resetSettings(scope, current) {
  * @param runtime - recovery runtime.
  * @param store - durable store.
  * @param logger - host logger.
+ * @param authorize - Context allowed to read the nested `connection.authentication`
+ *   service. DSH 0.2.3 made `connection.admit()` read that property, so the caller
+ *   must hold the matching inject; older DSH builds resolve it on any Context.
  * @returns an HTTP handler for `BASE`.
  */
-export function createRoute(ctx, runtime, store, logger) {
+export function createRoute(ctx, runtime, store, logger, authorize = () => ctx) {
   return async (req, res) => {
     try {
-      if (!localBrowser(ctx, req, res)) return
+      if (!localBrowser(authorize(), req, res)) return
       const path = new URL(req.url, 'http://localhost').pathname.slice(BASE.length + 1)
       if (req.method === 'GET') {
         if (path === 'state') return reply(res, 200, runtime.status())
